@@ -1,0 +1,8 @@
+backend/media/*
+!backend/media/.gitkeep
+backend/venv/
+backend/emotion_tester.db
+__pycache__/
+*.pyc
+frontend/node_modules/
+frontend/dist/
