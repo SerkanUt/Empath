@@ -2,9 +2,9 @@ fastapi==0.115.0
 python-multipart==0.0.9
 uvicorn[standard]==0.30.6
 pydantic==2.9.2
-fer==22.5.1
+# PyPI py-feat (0.6.x) lacks Detectorv2; install v2 from GitHub.
+py-feat @ git+https://github.com/cosanlab/py-feat@v2.0.3
 opencv-python==4.10.0.84
 pillow==10.4.0
 moviepy==1.0.3
-tensorflow==2.17.0
 numpy==1.26.4

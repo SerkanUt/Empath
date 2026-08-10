@@ -23,7 +23,7 @@ const CALIBRATION_MODES = [
   })),
 ]
 
-export default function PreTestCalibration({ viewerLabel, saving = false, error: externalError, onComplete }) {
+export default function PreTestCalibration({ viewerLabel, saving = false, error: externalError, onSave }) {
   const webcamVideoRef = useRef(null)
   const canvasRef = useRef(document.createElement('canvas'))
   const streamRef = useRef(null)
@@ -97,6 +97,7 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
     if (!frame) return
     try {
       const result = await api.detectEmotion(frame)
+      if (!result) return
       const sample = {
         timestamp: Date.now(),
         dominant_emotion: result.dominant_emotion,
@@ -176,19 +177,17 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
     }
   }
 
-  function handleContinue() {
-    onComplete(buildCalibrationResult())
+  function handleSave() {
+    onSave(buildCalibrationResult())
   }
 
-  const continueLabel = dual
-    ? `Continue (${emotions.map((e) => `${e} ${intensityFromPeak(peakProbs[e] || 0)}/5`).join(', ')})`
-    : finished
-      ? `Continue with intensity ${intensityFromPeak(peakProbs[emotions[0]] || 0)}`
-      : 'Use current reading & continue'
+  const saveLabel = dual
+    ? `Save calibration (${emotions.map((e) => `${e} ${intensityFromPeak(peakProbs[e] || 0)}/5`).join(', ')})`
+    : `Save calibration (intensity ${intensityFromPeak(peakProbs[emotions[0]] || 0)}/5)`
 
   return (
     <div className="panel">
-      <h2>Pre-test — calibrate intensity</h2>
+      <h2>Calibration — set intensity baseline</h2>
       <p className="status-line" style={{ marginTop: -8, marginBottom: 16 }}>
         {dual
           ? 'Watch one reference clip — we track your peak happy and peak sad reactions separately to set your personal intensity scale.'
@@ -341,12 +340,17 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
       </div>
 
       <div style={{ marginTop: 20, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <button className="primary" onClick={handleContinue} disabled={saving || (!finished && sampleCount === 0)}>
-          {saving ? 'Saving…' : finished ? continueLabel : 'Use current reading & continue'}
+        <button className="primary" onClick={handleSave} disabled={saving || sampleCount === 0}>
+          {saving ? 'Saving…' : finished ? saveLabel : `Save calibration session (${viewerLabel})`}
         </button>
-        {!finished && (
+        {!finished && sampleCount > 0 && (
           <span className="status-line" style={{ alignSelf: 'center' }}>
-            Play the clip through, or continue early once you’ve seen a clear reaction.
+            Play the clip through for best results, or save early once you’ve seen a clear reaction.
+          </span>
+        )}
+        {sampleCount === 0 && (
+          <span className="status-line" style={{ alignSelf: 'center' }}>
+            Start the webcam and play the reference clip to capture samples.
           </span>
         )}
       </div>

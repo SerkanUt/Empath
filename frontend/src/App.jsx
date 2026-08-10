@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { api } from './api.js'
 import SceneSetup from './components/SceneSetup.jsx'
 import ControlMode from './components/ControlMode.jsx'
+import CalibrationMode from './components/CalibrationMode.jsx'
 import TestMode from './components/TestMode.jsx'
 import ResultsDashboard from './components/ResultsDashboard.jsx'
 import LiveDetector from './components/LiveDetector.jsx'
 
-const TABS = ['Scenes', 'Control', 'Test', 'Results', 'Live']
+const TABS = ['Scenes', 'Control', 'Calibration', 'Test', 'Results', 'Live']
 
 export default function App() {
   const [scenes, setScenes] = useState([])
@@ -81,6 +82,18 @@ export default function App() {
           scene={selectedScene}
           onSaved={async () => {
             await refreshSessions(selectedScene)
+            setActiveTab('Calibration')
+          }}
+        />
+      )}
+
+      {activeTab === 'Calibration' && selectedScene && (
+        <CalibrationMode
+          scene={selectedScene}
+          calibrationSessions={calibrationSessions}
+          testSessions={testSessions}
+          onSaved={async () => {
+            await refreshSessions(selectedScene)
             setActiveTab('Test')
           }}
         />
@@ -90,8 +103,6 @@ export default function App() {
         <TestMode
           scene={selectedScene}
           calibrationSessions={calibrationSessions}
-          testSessions={testSessions}
-          onSessionsChanged={() => refreshSessions(selectedScene)}
           onSaved={async () => {
             await refreshSessions(selectedScene)
             setActiveTab('Results')

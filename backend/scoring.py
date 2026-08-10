@@ -1,3 +1,5 @@
+
+
 import math
 
 EMOTIONS = ["angry", "disgust", "fear", "happy", "sad", "surprise", "neutral", "distracted"]
@@ -11,7 +13,7 @@ def _empty_vector():
 def _label_to_vector(label: str, intensity: float = 1.0) -> dict:
     v = _empty_vector()
     if label in v:
-        v[label] = intensity / 5.0  # intensity is 1-5, normalize to 0-1
+        v[label] = intensity / 5.0 
     return v
 
 
@@ -34,7 +36,7 @@ def build_control_curve(tags: list, duration: float) -> list:
         if not active:
             curve.append(_label_to_vector("neutral", intensity=2))
             continue
-        # If multiple tags overlap, blend them.
+
         blended = _empty_vector()
         for tag in active:
             v = _label_to_vector(tag["emotion"], tag.get("intensity", 3))
@@ -45,17 +47,7 @@ def build_control_curve(tags: list, duration: float) -> list:
 
 
 def build_observed_curve(samples: list, duration: float, calibration: dict = None) -> list:
-    """
-    samples: [{timestamp, dominant_emotion, emotion_probabilities, face_detected}]
-    Returns a list of emotion-probability-vectors, one per STEP, using the
-    nearest sample at or before each time step (holds last known value
-    across gaps, e.g. brief face-not-detected moments).
 
-    If calibration is provided (from the pre-test YouTube clip), observed
-    probabilities are scaled relative to that viewer's peak reactivity so a
-    muted reactor and a highly expressive one land on a comparable intensity
-    scale.
-    """
     peak = None
     peaks = None
     if calibration:
@@ -117,8 +109,6 @@ def dtw_align(seq_a: list, seq_b: list, max_warp_seconds: float = 3.0):
 
     total = cost[n][m]
     if math.isinf(total):
-        # Band too tight for sequence length mismatch -- fall back to
-        # unrestricted DTW (rare, only happens with very short/odd inputs).
         return dtw_align(seq_a, seq_b, max_warp_seconds=10 ** 6)
 
     normalized = total / max(n, m, 1)
@@ -126,12 +116,7 @@ def dtw_align(seq_a: list, seq_b: list, max_warp_seconds: float = 3.0):
 
 
 def windowed_segment_scores(tags: list, samples: list, lag_tolerance: float = 2.0) -> list:
-    """
-    For each control-tagged segment, check whether the test viewer's
-    dominant emotion anywhere in [start_time, end_time + lag_tolerance]
-    matches the intended emotion. This is coarser than DTW but much more
-    directly readable: "did segment X land or not."
-    """
+
     results = []
     for tag in tags:
         window_start = tag["start_time"]
@@ -145,7 +130,7 @@ def windowed_segment_scores(tags: list, samples: list, lag_tolerance: float = 2.
             if s.get("face_detected") and s.get("dominant_emotion"):
                 e = s["dominant_emotion"]
             else:
-                # Looking away / no face → distracted
+               
                 e = "distracted"
             observed_counts[e] = observed_counts.get(e, 0) + 1
 
@@ -171,10 +156,7 @@ def compute_score(tags: list, samples: list, duration: float, calibration: dict 
 
     total_dist, normalized_dist, _ = dtw_align(control_curve, observed_curve)
 
-    # Convert normalized distance (0 = identical, larger = more different)
-    # into a 0-100 "accuracy" score. Max per-step vector distance is
-    # sqrt(2) for two unit-ish vectors in disjoint emotions; empirically
-    # normalized_dist rarely exceeds ~1.2, so we clip and scale against that.
+
     accuracy_score = max(0.0, 100.0 * (1 - min(normalized_dist / 1.2, 1.0)))
 
     segments = windowed_segment_scores(tags, samples)

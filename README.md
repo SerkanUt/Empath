@@ -8,7 +8,7 @@ DTW-aligned accuracy score plus a color-coded emotion timeline.
 ## What's implemented (v1)
 
 - **Control mode**: scrub through a scene, tag intended emotion + intensity + time range.
-- **Test mode**: webcam captures a frame every 0.5s while the scene plays, sent to the backend for emotion classification (via the `fer` package — a pretrained model, nothing trained from scratch), logged against the video's own timestamp (not wall-clock time).
+- **Test mode**: webcam captures a frame every 0.5s while the scene plays, sent to the backend for emotion classification (via **py-feat** `Detectorv2` — RetinaFace + multitask emotion model), logged against the video's own timestamp (not wall-clock time).
 - **Scoring**: `backend/scoring.py` resamples both curves and aligns them with Dynamic Time Warping (handles natural reaction lag of a few seconds), producing a DTW-based accuracy score. A separate, more literal "windowed segment match" score is also computed per intended-emotion segment.
 - **Visualization**: color-coded horizontal timelines for both curves, plus a segment-by-segment match/mismatch table.
 - **Persistence**: SQLite (`backend/emotion_tester.db`, created automatically on first run).
@@ -26,15 +26,38 @@ These were flagged as open questions/future work in the original spec — not bu
 
 ### 1. Backend
 
+**Requires Python 3.11+** (py-feat v2 will not install on 3.9 or 3.10).
+
+**Option A — conda (recommended on Mac)**
+
 ```bash
 cd backend
-python3 -m venv venv
-source venv/bin/activate  # on Windows: venv\Scripts\activate
+conda deactivate
+conda env remove -n emotion-film -y   # remove old env if it used Python 3.9
+conda create -n emotion-film python=3.11 -y
+conda activate emotion-film
+conda install -y ffmpeg -c conda-forge   # required for py-feat import
+python --version   # must show 3.11.x
+python -m pip install -r requirements.txt   # NOT bare 'pip' — see note below
+./run.sh   # or: python -m uvicorn main:app --reload --port 8000
+```
+
+Or run `./setup.sh` from the `backend` folder (does the same checks).
+
+**If `pip install` fails with Python 3.9** even though `python --version` is 3.11, your shell's `pip` is the wrong one. Always use `python -m pip install ...` instead of `pip install ...`.
+
+**Option B — venv (Homebrew Python 3.11)**
+
+```bash
+cd backend
+/opt/homebrew/bin/python3.11 -m venv venv
+source venv/bin/activate
+python --version   # must show 3.11.x
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-First install will pull TensorFlow (for the `fer` package's emotion model) — it's a big dependency, this is normal and only needs to happen once.
+First run downloads PyTorch and py-feat model weights from Hugging Face (~hundreds of MB).
 
 The API will be live at `http://localhost:8000`. Visit `http://localhost:8000/` — you should see `{"status": "ok"}`.
 

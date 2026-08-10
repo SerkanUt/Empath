@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { EMOTIONS, colorFor } from '../emotions.js'
 
-const SAMPLE_INTERVAL_MS = 400
+const SAMPLE_INTERVAL_MS = 800
 
 export default function LiveDetector() {
   const webcamVideoRef = useRef(null)
@@ -71,8 +71,12 @@ export default function LiveDetector() {
     const started = performance.now()
     try {
       const result = await api.detectEmotion(frame)
+      console.log(result.emotion_probabilities)
+      if (!result || typeof result !== 'object') {
+        throw new Error('Empty response from emotion detector')
+      }
       setLatencyMs(Math.round(performance.now() - started))
-      setDominant(result.dominant_emotion)
+      setDominant(result.dominant_emotion ?? null)
       setFaceDetected(!!result.face_detected)
       setProbs((prev) => {
         const next = { ...prev }
@@ -118,7 +122,7 @@ export default function LiveDetector() {
     <div className="panel">
       <h2>Live detector — emotion scores</h2>
       <p className="status-line" style={{ marginTop: -8, marginBottom: 16 }}>
-        Point the webcam at your face and watch the raw FER probabilities update live. Useful for checking
+        Point the webcam at your face and watch py-feat emotion scores update live. Useful for checking
         whether sad is being read as neutral or distracted.
       </p>
 

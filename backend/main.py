@@ -31,6 +31,24 @@ database.init_db()
 app.mount("/media", StaticFiles(directory=str(MEDIA_DIR)), name="media")
 
 
+def _check_detector_dependencies():
+    """Fail fast with a clear message if py-feat is missing from this Python."""
+    try:
+        import feat  # noqa: F401
+    except ImportError as e:
+        raise RuntimeError(
+            "py-feat is not installed for the Python running this server. "
+            "Stop uvicorn, run `conda activate emotion-film`, then "
+            "`python -m pip install -r requirements.txt`, and start with "
+            "`python -m uvicorn main:app --reload --port 8000` (or `./run.sh`)."
+        ) from e
+
+
+@app.on_event("startup")
+def verify_dependencies():
+    _check_detector_dependencies()
+
+
 def get_video_duration(path: Path) -> Optional[float]:
     try:
         from moviepy.editor import VideoFileClip

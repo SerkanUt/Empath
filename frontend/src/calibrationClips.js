@@ -1,5 +1,6 @@
 
-const PLACEHOLDER_ID = 'jNQXAC9IVRw' 
+const PLACEHOLDER_ID = 'jNQXAC9IVRw'
+
 
 export const DUAL_CALIBRATION = {
   emotions: ['happy', 'sad'],
@@ -46,7 +47,7 @@ export const CALIBRATION_CLIPS = {
   },
 }
 
-/** Map peak probability (0–1) of the target emotion to intensity 1–5. */
+
 export function intensityFromPeak(peak) {
   if (peak == null || Number.isNaN(peak)) return 1
   const intensity = Math.round(1 + Math.min(1, Math.max(0, peak)) * 4)

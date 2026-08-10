@@ -1,12 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { colorFor } from '../emotions.js'
-import PreTestCalibration from './PreTestCalibration.jsx'
-import { collectViewerLabels, nextViewerLabel } from '../viewerLabels.js'
 
 const SAMPLE_INTERVAL_MS = 500
 
-export default function TestMode({ scene, calibrationSessions, testSessions, onSessionsChanged, onSaved }) {
+export default function TestMode({ scene, calibrationSessions, onSaved }) {
   const videoRef = useRef(null)
   const webcamVideoRef = useRef(null)
   const canvasRef = useRef(document.createElement('canvas'))
@@ -15,49 +13,43 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
   const intervalRef = useRef(null)
   const streamRef = useRef(null)
 
-  const [calibration, setCalibration] = useState(null)
+  const [selectedCalibrationId, setSelectedCalibrationId] = useState(null)
   const [webcamReady, setWebcamReady] = useState(false)
   const [running, setRunning] = useState(false)
   const [lastEmotion, setLastEmotion] = useState(null)
   const [sampleCount, setSampleCount] = useState(0)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [savingCalibration, setSavingCalibration] = useState(false)
-  const [viewerLabel, setViewerLabel] = useState('')
+
+  const selectedCalibration = calibrationSessions.find((c) => c.id === selectedCalibrationId)
+  const calibration = selectedCalibration?.calibration
+  const viewerLabel = selectedCalibration?.viewer_label
 
   useEffect(() => {
     return () => stopWebcam()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const pendingViewerLabel = nextViewerLabel(collectViewerLabels(calibrationSessions, testSessions))
-
-  async function handleCalibrationComplete(calData) {
-    setSavingCalibration(true)
-    setError(null)
-    try {
-      const saved = await api.createCalibrationSession(scene.id, {
-        viewer_label: pendingViewerLabel,
-        calibration: calData,
-      })
-      await onSessionsChanged?.()
-      setCalibration(saved.calibration)
-      setViewerLabel(saved.viewer_label)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSavingCalibration(false)
+  useEffect(() => {
+    if (calibrationSessions.length === 0) {
+      setSelectedCalibrationId(null)
+      return
     }
-  }
+    const stillValid = calibrationSessions.some((c) => c.id === selectedCalibrationId)
+    if (!stillValid) {
+      setSelectedCalibrationId(calibrationSessions[0].id)
+    }
+  }, [calibrationSessions, selectedCalibrationId])
 
-  if (!calibration) {
+  if (calibrationSessions.length === 0) {
     return (
-      <PreTestCalibration
-        viewerLabel={pendingViewerLabel}
-        saving={savingCalibration}
-        error={error}
-        onComplete={handleCalibrationComplete}
-      />
+      <div className="panel">
+        <h2>Test mode — record a viewer's reaction</h2>
+        <p className="status-line">
+          No calibration sessions saved for this scene yet. Go to the <strong>Calibration</strong> tab first,
+          watch the reference clip, and save a calibration session for each viewer (User 1, User 2, …).
+        </p>
+      </div>
     )
   }
 
@@ -110,6 +102,7 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
     const timestamp = video.currentTime
     try {
       const result = await api.detectEmotion(frame)
+      if (!result) return
       const sample = {
         timestamp,
         dominant_emotion: result.dominant_emotion,
@@ -119,7 +112,7 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
       samplesRef.current.push(sample)
       setSampleCount(samplesRef.current.length)
       setLastEmotion(result.dominant_emotion || (result.face_detected ? null : 'distracted'))
-    } catch (err) {
+    } catch {
       samplesRef.current.push({
         timestamp,
         dominant_emotion: 'distracted',
@@ -182,44 +175,60 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
     }
   }
 
+  function calibrationSummary(cal) {
+    if (!cal) return '—'
+    if (cal.mode === 'dual' && cal.peaks) {
+      return `happy+sad · happy ${cal.intensities?.happy ?? '—'}/5 · sad ${cal.intensities?.sad ?? '—'}/5`
+    }
+    return `${cal.emotion} · intensity ${cal.intensity}/5`
+  }
+
   return (
     <div className="panel">
       <h2>Test mode — record a viewer's reaction</h2>
       <p className="status-line" style={{ marginTop: -8, marginBottom: 16 }}>
-        Start the webcam, then play the scene straight through. Emotion samples are captured automatically
-        {` every ${SAMPLE_INTERVAL_MS / 1000}s`} while playing, synced to the video's own timestamp.
+        Pick a saved calibration, start the webcam, then play the scene straight through. Emotion samples are
+        captured automatically{` every ${SAMPLE_INTERVAL_MS / 1000}s`} while playing.
       </p>
 
-      <div className="calibration-badge">
-        Viewer: <strong>{viewerLabel}</strong>
-        {' · '}
-        {calibration.mode === 'dual' && calibration.peaks ? (
-          <>
-            Calibrated on <strong>happy + sad</strong>
-            {' · '}
-            happy peak {(calibration.peaks.happy * 100).toFixed(0)}% →{' '}
-            <strong>{calibration.intensities?.happy ?? calibration.intensity}</strong>/5
-            {' · '}
-            sad peak {(calibration.peaks.sad * 100).toFixed(0)}% →{' '}
-            <strong>{calibration.intensities?.sad ?? calibration.intensity}</strong>/5
-          </>
-        ) : (
-          <>
-            Calibrated on <strong style={{ color: colorFor(calibration.emotion) }}>{calibration.emotion}</strong>
-            {' · '}peak {(calibration.peak_probability * 100).toFixed(0)}%
-            {' · '}intensity <strong>{calibration.intensity}</strong>/5
-          </>
-        )}
-        <button type="button" className="upload-clear" style={{ marginLeft: 12 }} onClick={() => setCalibration(null)}>
-          Re-calibrate
-        </button>
-      </div>
+      <label>Calibration session</label>
+      <select
+        value={selectedCalibrationId || ''}
+        onChange={(e) => setSelectedCalibrationId(parseInt(e.target.value, 10))}
+      >
+        {calibrationSessions.map((c) => (
+          <option key={c.id} value={c.id}>
+            #{c.id} · {c.viewer_label} · {calibrationSummary(c.calibration)}
+          </option>
+        ))}
+      </select>
+
+      {calibration && (
+        <div className="calibration-badge">
+          Viewer: <strong>{viewerLabel}</strong>
+          {' · '}
+          {calibration.mode === 'dual' && calibration.peaks ? (
+            <>
+              Calibrated on <strong>happy + sad</strong>
+              {' · '}
+              happy peak {(calibration.peaks.happy * 100).toFixed(0)}% →{' '}
+              <strong>{calibration.intensities?.happy ?? calibration.intensity}</strong>/5
+              {' · '}
+              sad peak {(calibration.peaks.sad * 100).toFixed(0)}% →{' '}
+              <strong>{calibration.intensities?.sad ?? calibration.intensity}</strong>/5
+            </>
+          ) : (
+            <>
+              Calibrated on{' '}
+              <strong style={{ color: colorFor(calibration.emotion) }}>{calibration.emotion}</strong>
+              {' · '}peak {(calibration.peak_probability * 100).toFixed(0)}%
+              {' · '}intensity <strong>{calibration.intensity}</strong>/5
+            </>
+          )}
+        </div>
+      )}
 
       {error && <div className="error-box">{error}</div>}
-
-      <p className="status-line" style={{ marginBottom: 14 }}>
-        Saving test session as <strong>{viewerLabel}</strong>
-      </p>
 
       <div className="video-row">
         <div>
@@ -260,7 +269,7 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
 
       <div style={{ marginTop: 20 }}>
         <button className="primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save test session'}
+          {saving ? 'Saving…' : `Save test session (${viewerLabel})`}
         </button>
       </div>
     </div>
