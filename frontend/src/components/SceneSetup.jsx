@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react'
 import { api, SUPPORTED_VIDEO_FORMATS } from '../api.js'
+import { formatTime } from './Timeline.jsx'
 
 const ACCEPTED_VIDEO_TYPES = 'video/mp4,video/webm,video/ogg,video/quicktime,video/x-m4v,.mp4,.webm,.ogg,.mov,.m4v'
 
@@ -58,7 +59,7 @@ export default function SceneSetup({ scenes, onScenesChanged, selectedScene, onS
     e.preventDefault()
     setError(null)
     if (!title || !videoUrl || !duration) {
-      setError('Title, video, and duration are all required.')
+      setError('A title, a video and its length are all needed.')
       return
     }
     setSubmitting(true)
@@ -85,31 +86,37 @@ export default function SceneSetup({ scenes, onScenesChanged, selectedScene, onS
   }
 
   return (
-    <div className="panel">
-      <h2>Scenes</h2>
+    <div className="setup-layout">
+      <h1>Your videos</h1>
 
       {scenes.length > 0 && (
         <>
-          <h3>Existing scenes</h3>
-          <div className="scene-picker">
+          <h2>Pick one to test</h2>
+          <div className="scene-picker" role="list">
             {scenes.map((s) => (
               <div
                 key={s.id}
-                className={`scene-chip ${selectedScene?.id === s.id ? 'active' : ''}`}
-                onClick={() => onSelectScene(s)}
+                role="listitem"
               >
-                {s.title}
+                <button
+                  type="button"
+                  className={`scene-chip ${selectedScene?.id === s.id ? 'active' : ''}`}
+                  onClick={() => onSelectScene(s)}
+                >
+                  <strong>{s.title}</strong>
+                  <span>{formatTime(s.duration)}</span>
+                </button>
               </div>
             ))}
           </div>
         </>
       )}
 
-      <h3>Add a new scene</h3>
+      <h2>Add a new video</h2>
       {error && <div className="error-box">{error}</div>}
       <form onSubmit={handleCreate}>
-        <label>Scene title</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Act 2 — Rooftop confrontation" />
+        <label htmlFor="scene-title">Title</label>
+        <input id="scene-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Morning routine reel" />
 
         <label>Video file</label>
         <div
@@ -147,15 +154,15 @@ export default function SceneSetup({ scenes, onScenesChanged, selectedScene, onS
             </>
           ) : (
             <>
-              <span>Drop a video here or click to browse</span>
+              <span className="upload-title">Drop a video here or click to browse</span>
               <span className="upload-hint">Supported: {SUPPORTED_VIDEO_FORMATS.join(', ')}</span>
             </>
           )}
         </div>
 
         <label>
-          Or paste a video URL
-          <span className="label-hint"> (optional if you uploaded a file above)</span>
+          Or paste a video link
+          <span className="label-hint"> (not needed if you uploaded a file)</span>
         </label>
         <input
           type="text"
@@ -169,14 +176,14 @@ export default function SceneSetup({ scenes, onScenesChanged, selectedScene, onS
               }
             }
           }}
-          placeholder="https://example.com/scene1.mp4"
+          placeholder="https://example.com/my-video.mp4"
         />
 
-        <label>Duration (seconds)</label>
-        <input type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Auto-filled after upload, or enter manually" step="0.01" />
+        <label htmlFor="scene-duration">Length (seconds)</label>
+        <input id="scene-duration" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Filled in after upload, or type it" step="0.01" />
 
         <button className="primary" type="submit" disabled={submitting || uploading}>
-          {submitting ? 'Adding…' : 'Add scene'}
+          {submitting ? 'Adding…' : 'Add video'}
         </button>
       </form>
     </div>

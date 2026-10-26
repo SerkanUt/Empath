@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
 import { EMOTIONS, colorFor } from '../emotions.js'
+import EmotionMark from './EmotionMark.jsx'
 import {
   CALIBRATION_CLIPS,
   DUAL_CALIBRATION,
@@ -103,6 +104,15 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
         dominant_emotion: result.dominant_emotion,
         emotion_probabilities: result.emotion_probabilities,
         face_detected: result.face_detected,
+        ...(typeof result.focus_intensity === 'number'
+          ? { focus_intensity: result.focus_intensity }
+          : {}),
+        ...(result.au_intensities ? { au_intensities: result.au_intensities } : {}),
+        ...(result.au_presence && Object.keys(result.au_presence).length
+          ? { au_presence: result.au_presence }
+          : {}),
+        ...(result.au_schema ? { au_schema: result.au_schema } : {}),
+        ...(result.action_units ? { action_units: result.action_units } : {}),
       }
       samplesRef.current.push(sample)
       setSampleCount(samplesRef.current.length)
@@ -186,8 +196,8 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
     : `Save calibration (intensity ${intensityFromPeak(peakProbs[emotions[0]] || 0)}/5)`
 
   return (
-    <div className="panel">
-      <h2>Calibration — set intensity baseline</h2>
+    <div className="setup-layout setup-layout--wide">
+      <h1>Warm-up: set a baseline</h1>
       <p className="status-line" style={{ marginTop: -8, marginBottom: 16 }}>
         {dual
           ? 'Watch one reference clip — we track your peak happy and peak sad reactions separately to set your personal intensity scale.'
@@ -198,55 +208,29 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
       {error && <div className="error-box">{error}</div>}
 
       <p className="status-line" style={{ marginBottom: 16 }}>
-        Calibration will be saved as <strong>{viewerLabel}</strong>
+        This warm-up will be saved as <strong>{viewerLabel}</strong>
       </p>
 
-      <label>Calibration mode</label>
+      <label>Warm-up emotion</label>
       <div className="emotion-buttons">
         {CALIBRATION_MODES.map((m) => (
           <button
             key={m.id}
             type="button"
-            className={`emotion-btn ${modeId === m.id ? 'active' : ''}`}
+            className={`emotion-btn emotion-btn--filled ${modeId === m.id ? 'active' : ''}`}
+            style={{ '--emotion': colorFor(m.dual ? 'happy' : m.emotions[0]) }}
             onClick={() => setModeId(m.id)}
             disabled={sampling}
           >
             {m.dual ? (
               <>
-                <span
-                  style={{
-                    background: colorFor('happy'),
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    display: 'inline-block',
-                    marginRight: 4,
-                  }}
-                />
-                <span
-                  style={{
-                    background: colorFor('sad'),
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    display: 'inline-block',
-                    marginRight: 6,
-                  }}
-                />
+                <EmotionMark emotion="happy" size={16} ink />
+                <EmotionMark emotion="sad" size={16} ink />
                 {m.label}
               </>
             ) : (
               <>
-                <span
-                  style={{
-                    background: colorFor(m.emotions[0]),
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    display: 'inline-block',
-                    marginRight: 6,
-                  }}
-                />
+                <EmotionMark emotion={m.emotions[0]} size={16} ink />
                 {m.label}
               </>
             )}

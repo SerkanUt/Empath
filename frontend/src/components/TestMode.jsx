@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { api } from '../api.js'
-import { colorFor } from '../emotions.js'
+import { colorFor, emotionLabel } from '../emotions.js'
+import VideoFrame from './VideoFrame.jsx'
+import { collectViewerLabels, nextViewerLabel } from '../viewerLabels.js'
 
 const SAMPLE_INTERVAL_MS = 500
+const NO_CALIBRATION = 'none'
 
-export default function TestMode({ scene, calibrationSessions, onSaved }) {
+export default function TestMode({ scene, calibrationSessions, testSessions, onSaved }) {
   const videoRef = useRef(null)
   const webcamVideoRef = useRef(null)
   const canvasRef = useRef(document.createElement('canvas'))
@@ -13,7 +16,7 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
   const intervalRef = useRef(null)
   const streamRef = useRef(null)
 
-  const [selectedCalibrationId, setSelectedCalibrationId] = useState(null)
+  const [selectedCalibrationId, setSelectedCalibrationId] = useState(NO_CALIBRATION)
   const [webcamReady, setWebcamReady] = useState(false)
   const [running, setRunning] = useState(false)
   const [lastEmotion, setLastEmotion] = useState(null)
@@ -21,9 +24,14 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
 
-  const selectedCalibration = calibrationSessions.find((c) => c.id === selectedCalibrationId)
+  const useCalibration = selectedCalibrationId !== NO_CALIBRATION
+  const selectedCalibration = useCalibration
+    ? calibrationSessions.find((c) => c.id === selectedCalibrationId)
+    : null
   const calibration = selectedCalibration?.calibration
-  const viewerLabel = selectedCalibration?.viewer_label
+  const viewerLabel = useCalibration
+    ? selectedCalibration?.viewer_label
+    : nextViewerLabel(collectViewerLabels(calibrationSessions, testSessions))
 
   useEffect(() => {
     return () => stopWebcam()
@@ -31,27 +39,12 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
   }, [])
 
   useEffect(() => {
-    if (calibrationSessions.length === 0) {
-      setSelectedCalibrationId(null)
-      return
-    }
+    if (selectedCalibrationId === NO_CALIBRATION) return
     const stillValid = calibrationSessions.some((c) => c.id === selectedCalibrationId)
     if (!stillValid) {
-      setSelectedCalibrationId(calibrationSessions[0].id)
+      setSelectedCalibrationId(NO_CALIBRATION)
     }
   }, [calibrationSessions, selectedCalibrationId])
-
-  if (calibrationSessions.length === 0) {
-    return (
-      <div className="panel">
-        <h2>Test mode — record a viewer's reaction</h2>
-        <p className="status-line">
-          No calibration sessions saved for this scene yet. Go to the <strong>Calibration</strong> tab first,
-          watch the reference clip, and save a calibration session for each viewer (User 1, User 2, …).
-        </p>
-      </div>
-    )
-  }
 
   async function startWebcam() {
     setError(null)
@@ -108,6 +101,15 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
         dominant_emotion: result.dominant_emotion,
         emotion_probabilities: result.emotion_probabilities,
         face_detected: result.face_detected,
+        ...(typeof result.focus_intensity === 'number'
+          ? { focus_intensity: result.focus_intensity }
+          : {}),
+        ...(result.au_intensities ? { au_intensities: result.au_intensities } : {}),
+        ...(result.au_presence && Object.keys(result.au_presence).length
+          ? { au_presence: result.au_presence }
+          : {}),
+        ...(result.au_schema ? { au_schema: result.au_schema } : {}),
+        ...(result.action_units ? { action_units: result.action_units } : {}),
       }
       samplesRef.current.push(sample)
       setSampleCount(samplesRef.current.length)
@@ -124,7 +126,7 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
 
   function handlePlay() {
     if (!webcamReady) {
-      setError('Start the webcam before playing the scene.')
+      setError('Start the webcam before playing the video.')
       videoRef.current?.pause()
       return
     }
@@ -155,7 +157,7 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
 
   async function handleSave() {
     if (samplesRef.current.length === 0) {
-      setError('No samples captured yet — play the scene with the webcam running first.')
+      setError('No samples captured yet. Play the video with the webcam running first.')
       return
     }
     setSaving(true)
@@ -165,7 +167,7 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
         samples: samplesRef.current,
         pause_events: pauseEventsRef.current,
         viewer_label: viewerLabel,
-        calibration,
+        ...(calibration ? { calibration } : {}),
       })
       onSaved(session)
     } catch (err) {
@@ -184,94 +186,109 @@ export default function TestMode({ scene, calibrationSessions, onSaved }) {
   }
 
   return (
-    <div className="panel">
-      <h2>Test mode — record a viewer's reaction</h2>
-      <p className="status-line" style={{ marginTop: -8, marginBottom: 16 }}>
-        Pick a saved calibration, start the webcam, then play the scene straight through. Emotion samples are
-        captured automatically{` every ${SAMPLE_INTERVAL_MS / 1000}s`} while playing.
-      </p>
+    <div className="split-layout">
+      <VideoFrame
+        ref={videoRef}
+        src={scene.video_url}
+        onPlay={handlePlay}
+        onPause={handlePause}
+        onSeeking={handleSeeking}
+        onEnded={handleEnded}
+      />
 
-      <label>Calibration session</label>
-      <select
-        value={selectedCalibrationId || ''}
-        onChange={(e) => setSelectedCalibrationId(parseInt(e.target.value, 10))}
-      >
-        {calibrationSessions.map((c) => (
-          <option key={c.id} value={c.id}>
-            #{c.id} · {c.viewer_label} · {calibrationSummary(c.calibration)}
-          </option>
-        ))}
-      </select>
+      <section className="split-main">
+        <h1>Let a viewer watch</h1>
+        <p className="lede">
+          Start the webcam, then play the video straight through. We read their face{` every ${SAMPLE_INTERVAL_MS / 1000}s`} while it plays.
+          Frames stay on this computer.
+        </p>
 
-      {calibration && (
-        <div className="calibration-badge">
-          Viewer: <strong>{viewerLabel}</strong>
-          {' · '}
-          {calibration.mode === 'dual' && calibration.peaks ? (
-            <>
-              Calibrated on <strong>happy + sad</strong>
-              {' · '}
-              happy peak {(calibration.peaks.happy * 100).toFixed(0)}% →{' '}
-              <strong>{calibration.intensities?.happy ?? calibration.intensity}</strong>/5
-              {' · '}
-              sad peak {(calibration.peaks.sad * 100).toFixed(0)}% →{' '}
-              <strong>{calibration.intensities?.sad ?? calibration.intensity}</strong>/5
-            </>
-          ) : (
-            <>
-              Calibrated on{' '}
-              <strong style={{ color: colorFor(calibration.emotion) }}>{calibration.emotion}</strong>
-              {' · '}peak {(calibration.peak_probability * 100).toFixed(0)}%
-              {' · '}intensity <strong>{calibration.intensity}</strong>/5
-            </>
-          )}
-        </div>
-      )}
+        {error && <div className="error-box">{error}</div>}
 
-      {error && <div className="error-box">{error}</div>}
-
-      <div className="video-row">
-        <div>
-          <video
-            ref={videoRef}
-            src={scene.video_url}
-            controls
-            onPlay={handlePlay}
-            onPause={handlePause}
-            onSeeking={handleSeeking}
-            onEnded={handleEnded}
-          />
-        </div>
         <div className="webcam-preview">
           {running && (
             <div className="live-dot">
-              <span className="dot" /> LIVE
+              <span className="dot" /> Recording
             </div>
           )}
-          <video ref={webcamVideoRef} autoPlay muted playsInline style={{ width: '100%', display: 'block' }} />
+          <video ref={webcamVideoRef} autoPlay muted playsInline />
           {!webcamReady && (
-            <button className="secondary" style={{ margin: 8 }} onClick={startWebcam}>
+            <button className="secondary webcam-start" onClick={startWebcam}>
               Start webcam
             </button>
           )}
         </div>
-      </div>
 
-      <div className="status-line" style={{ marginTop: 16 }}>
-        Samples captured: {sampleCount}
-        {lastEmotion && (
-          <>
-            {' · Last read: '}
-            <strong style={{ color: colorFor(lastEmotion) }}>{lastEmotion}</strong>
-          </>
+        <label htmlFor="cal-pick">Warm-up (optional)</label>
+        <select
+          id="cal-pick"
+          value={selectedCalibrationId}
+          onChange={(e) => {
+            const v = e.target.value
+            setSelectedCalibrationId(v === NO_CALIBRATION ? NO_CALIBRATION : parseInt(v, 10))
+          }}
+        >
+          <option value={NO_CALIBRATION}>None, use raw emotion scores</option>
+          {calibrationSessions.map((c) => (
+            <option key={c.id} value={c.id}>
+              #{c.id} · {c.viewer_label} · {calibrationSummary(c.calibration)}
+            </option>
+          ))}
+        </select>
+
+        {!useCalibration && (
+          <p className="status-line">
+            Saved as <strong>{viewerLabel}</strong> without intensity normalization.
+            {calibrationSessions.length === 0 && (
+              <>
+                {' '}
+                You can add a warm-up first from the <strong>Warm-up</strong> step.
+              </>
+            )}
+          </p>
         )}
-      </div>
 
-      <div style={{ marginTop: 20 }}>
-        <button className="primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : `Save test session (${viewerLabel})`}
-        </button>
-      </div>
+        {calibration && (
+          <div className="calibration-badge">
+            Viewer: <strong>{viewerLabel}</strong>
+            {' · '}
+            {calibration.mode === 'dual' && calibration.peaks ? (
+              <>
+                Warmed up on <strong>happy + sad</strong>
+                {' · '}
+                happy peak {(calibration.peaks.happy * 100).toFixed(0)}% →{' '}
+                <strong>{calibration.intensities?.happy ?? calibration.intensity}</strong>/5
+                {' · '}
+                sad peak {(calibration.peaks.sad * 100).toFixed(0)}% →{' '}
+                <strong>{calibration.intensities?.sad ?? calibration.intensity}</strong>/5
+              </>
+            ) : (
+              <>
+                Warmed up on{' '}
+                <strong style={{ color: colorFor(calibration.emotion) }}>{emotionLabel(calibration.emotion)}</strong>
+                {' · '}peak {(calibration.peak_probability * 100).toFixed(0)}%
+                {' · '}intensity <strong>{calibration.intensity}</strong>/5
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="status-line">
+          Samples captured: {sampleCount}
+          {lastEmotion && (
+            <>
+              {' · Last read: '}
+              <strong style={{ color: colorFor(lastEmotion) }}>{emotionLabel(lastEmotion)}</strong>
+            </>
+          )}
+        </div>
+
+        <div className="action-row">
+          <button className="primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : `Save ${viewerLabel}'s watch`}
+          </button>
+        </div>
+      </section>
     </div>
   )
 }

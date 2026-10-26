@@ -1,0 +1,492 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T20:26:59Z",
+  "title": "Design System: ReelReaction",
+  "extensions": {
+    "colorMeta": {
+      "text": {
+        "role": "primary",
+        "displayName": "Paper White",
+        "canonical": "#f2f1f7",
+        "tonalRamp": [
+          "oklch(15% 0.01 285)",
+          "oklch(28% 0.01 285)",
+          "oklch(40% 0.01 285)",
+          "oklch(52% 0.01 285)",
+          "oklch(64% 0.01 285)",
+          "oklch(76% 0.01 285)",
+          "oklch(86% 0.01 285)",
+          "oklch(95% 0.01 285)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#0d0d12",
+        "tonalRamp": [
+          "oklch(15% 0.01 285)",
+          "oklch(28% 0.01 285)",
+          "oklch(40% 0.01 285)",
+          "oklch(52% 0.01 285)",
+          "oklch(64% 0.01 285)",
+          "oklch(76% 0.01 285)",
+          "oklch(86% 0.01 285)",
+          "oklch(95% 0.01 285)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "#15151d",
+        "tonalRamp": [
+          "oklch(15% 0.01 285)",
+          "oklch(28% 0.01 285)",
+          "oklch(40% 0.01 285)",
+          "oklch(52% 0.01 285)",
+          "oklch(64% 0.01 285)",
+          "oklch(76% 0.01 285)",
+          "oklch(86% 0.01 285)",
+          "oklch(95% 0.01 285)"
+        ]
+      },
+      "panel-raised": {
+        "role": "neutral",
+        "displayName": "Raised Panel",
+        "canonical": "#1d1d28",
+        "tonalRamp": [
+          "oklch(15% 0.012 285)",
+          "oklch(28% 0.012 285)",
+          "oklch(40% 0.012 285)",
+          "oklch(52% 0.012 285)",
+          "oklch(64% 0.012 285)",
+          "oklch(76% 0.012 285)",
+          "oklch(86% 0.012 285)",
+          "oklch(95% 0.012 285)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#2c2c3a",
+        "tonalRamp": [
+          "oklch(15% 0.02 285)",
+          "oklch(28% 0.02 285)",
+          "oklch(40% 0.02 285)",
+          "oklch(52% 0.02 285)",
+          "oklch(64% 0.02 285)",
+          "oklch(76% 0.02 285)",
+          "oklch(86% 0.02 285)",
+          "oklch(95% 0.02 285)"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#4a4a5e",
+        "tonalRamp": [
+          "oklch(15% 0.025 285)",
+          "oklch(28% 0.025 285)",
+          "oklch(40% 0.025 285)",
+          "oklch(52% 0.025 285)",
+          "oklch(64% 0.025 285)",
+          "oklch(76% 0.025 285)",
+          "oklch(86% 0.025 285)",
+          "oklch(95% 0.025 285)"
+        ]
+      },
+      "text-dim": {
+        "role": "neutral",
+        "displayName": "Dim Text",
+        "canonical": "#b4b3c2",
+        "tonalRamp": [
+          "oklch(15% 0.015 285)",
+          "oklch(28% 0.015 285)",
+          "oklch(40% 0.015 285)",
+          "oklch(52% 0.015 285)",
+          "oklch(64% 0.015 285)",
+          "oklch(76% 0.015 285)",
+          "oklch(86% 0.015 285)",
+          "oklch(95% 0.015 285)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#14141c",
+        "tonalRamp": [
+          "oklch(15% 0.012 285)",
+          "oklch(28% 0.012 285)",
+          "oklch(40% 0.012 285)",
+          "oklch(52% 0.012 285)",
+          "oklch(64% 0.012 285)",
+          "oklch(76% 0.012 285)",
+          "oklch(86% 0.012 285)",
+          "oklch(95% 0.012 285)"
+        ]
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Miss Coral",
+        "canonical": "#ff9a8a",
+        "tonalRamp": [
+          "oklch(15% 0.1 30)",
+          "oklch(28% 0.1 30)",
+          "oklch(40% 0.1 30)",
+          "oklch(52% 0.1 30)",
+          "oklch(64% 0.1 30)",
+          "oklch(76% 0.1 30)",
+          "oklch(86% 0.1 30)",
+          "oklch(95% 0.1 30)"
+        ]
+      },
+      "emotion-angry": {
+        "role": "secondary",
+        "displayName": "Angry Orange-Red",
+        "canonical": "#ff6b4a",
+        "tonalRamp": [
+          "oklch(15% 0.19 35)",
+          "oklch(28% 0.19 35)",
+          "oklch(40% 0.19 35)",
+          "oklch(52% 0.19 35)",
+          "oklch(64% 0.19 35)",
+          "oklch(76% 0.19 35)",
+          "oklch(86% 0.19 35)",
+          "oklch(95% 0.19 35)"
+        ]
+      },
+      "emotion-disgust": {
+        "role": "secondary",
+        "displayName": "Disgust Green",
+        "canonical": "#8fc16a",
+        "tonalRamp": [
+          "oklch(15% 0.13 135)",
+          "oklch(28% 0.13 135)",
+          "oklch(40% 0.13 135)",
+          "oklch(52% 0.13 135)",
+          "oklch(64% 0.13 135)",
+          "oklch(76% 0.13 135)",
+          "oklch(86% 0.13 135)",
+          "oklch(95% 0.13 135)"
+        ]
+      },
+      "emotion-fear": {
+        "role": "secondary",
+        "displayName": "Fear Violet",
+        "canonical": "#a78bfa",
+        "tonalRamp": [
+          "oklch(15% 0.15 295)",
+          "oklch(28% 0.15 295)",
+          "oklch(40% 0.15 295)",
+          "oklch(52% 0.15 295)",
+          "oklch(64% 0.15 295)",
+          "oklch(76% 0.15 295)",
+          "oklch(86% 0.15 295)",
+          "oklch(95% 0.15 295)"
+        ]
+      },
+      "emotion-happy": {
+        "role": "secondary",
+        "displayName": "Happy Yellow",
+        "canonical": "#ffd23f",
+        "tonalRamp": [
+          "oklch(15% 0.17 90)",
+          "oklch(28% 0.17 90)",
+          "oklch(40% 0.17 90)",
+          "oklch(52% 0.17 90)",
+          "oklch(64% 0.17 90)",
+          "oklch(76% 0.17 90)",
+          "oklch(86% 0.17 90)",
+          "oklch(95% 0.17 90)"
+        ]
+      },
+      "emotion-sad": {
+        "role": "secondary",
+        "displayName": "Sad Blue",
+        "canonical": "#5aa2ff",
+        "tonalRamp": [
+          "oklch(15% 0.16 255)",
+          "oklch(28% 0.16 255)",
+          "oklch(40% 0.16 255)",
+          "oklch(52% 0.16 255)",
+          "oklch(64% 0.16 255)",
+          "oklch(76% 0.16 255)",
+          "oklch(86% 0.16 255)",
+          "oklch(95% 0.16 255)"
+        ]
+      },
+      "emotion-surprise": {
+        "role": "secondary",
+        "displayName": "Surprise Pink",
+        "canonical": "#ff7eb6",
+        "tonalRamp": [
+          "oklch(15% 0.18 355)",
+          "oklch(28% 0.18 355)",
+          "oklch(40% 0.18 355)",
+          "oklch(52% 0.18 355)",
+          "oklch(64% 0.18 355)",
+          "oklch(76% 0.18 355)",
+          "oklch(86% 0.18 355)",
+          "oklch(95% 0.18 355)"
+        ]
+      },
+      "emotion-neutral": {
+        "role": "secondary",
+        "displayName": "Neutral Grey",
+        "canonical": "#9a99a8",
+        "tonalRamp": [
+          "oklch(15% 0.02 290)",
+          "oklch(28% 0.02 290)",
+          "oklch(40% 0.02 290)",
+          "oklch(52% 0.02 290)",
+          "oklch(64% 0.02 290)",
+          "oklch(76% 0.02 290)",
+          "oklch(86% 0.02 290)",
+          "oklch(95% 0.02 290)"
+        ]
+      },
+      "emotion-focus": {
+        "role": "secondary",
+        "displayName": "Focus Teal (derived)",
+        "canonical": "#4fd1c5",
+        "tonalRamp": [
+          "oklch(15% 0.12 190)",
+          "oklch(28% 0.12 190)",
+          "oklch(40% 0.12 190)",
+          "oklch(52% 0.12 190)",
+          "oklch(64% 0.12 190)",
+          "oklch(76% 0.12 190)",
+          "oklch(86% 0.12 190)",
+          "oklch(95% 0.12 190)"
+        ]
+      },
+      "emotion-distracted": {
+        "role": "secondary",
+        "displayName": "Distracted Sand (derived)",
+        "canonical": "#c9b27c",
+        "tonalRamp": [
+          "oklch(15% 0.07 85)",
+          "oklch(28% 0.07 85)",
+          "oklch(40% 0.07 85)",
+          "oklch(52% 0.07 85)",
+          "oklch(64% 0.07 85)",
+          "oklch(76% 0.07 85)",
+          "oklch(86% 0.07 85)",
+          "oklch(95% 0.07 85)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Score",
+        "purpose": "The match score numeral only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page question and setup headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Wordmark and panel headings."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Section subheads, card names, captions."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "UI text, tabular numerals."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "Intro line under headings, 62ch max."
+      },
+      "label": {
+        "displayName": "Lane label",
+        "purpose": "Names of the two card lanes."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card",
+        "value": "0 6px 18px rgba(0,0,0,0.35)",
+        "purpose": "Emotion cards, tag cards, video."
+      },
+      {
+        "name": "card-lift",
+        "value": "0 12px 24px rgba(0,0,0,0.45)",
+        "purpose": "Emotion card hover."
+      },
+      {
+        "name": "playhead-halo",
+        "value": "0 0 0 2px rgba(13,13,18,0.6)",
+        "purpose": "Separates white playhead from coloured cards."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Hover, lift and card entrance."
+      },
+      {
+        "name": "card-in",
+        "value": "0.6s ease-out, translateY(10px) to 0, staggered 45ms",
+        "purpose": "Emotion card entrance."
+      },
+      {
+        "name": "state",
+        "value": "0.2s",
+        "purpose": "Hover and background transitions."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all durations 0.01ms",
+        "purpose": "prefers-reduced-motion override."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stack",
+        "value": "1000px"
+      },
+      {
+        "name": "phone",
+        "value": "720px"
+      },
+      {
+        "name": "card-container",
+        "value": "520px (container query on card row)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main action; white pill with ink text.",
+      "html": "<button class=\"ds-btn-primary\">Compare again</button>",
+      "css": ".ds-btn-primary{font-family:Figtree,system-ui,sans-serif;background:var(--action,#f2f1f7);color:#14141c;border:none;padding:13px 26px;border-radius:999px;font-weight:800;font-size:15px;cursor:pointer;transition:transform .2s cubic-bezier(.16,1,.3,1),background .2s}.ds-btn-primary:hover{background:#fff;transform:translateY(-1px)}.ds-btn-primary:active{transform:translateY(0)}.ds-btn-primary:focus-visible{outline:3px solid #f2f1f7;outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined pill for secondary actions.",
+      "html": "<button class=\"ds-btn-secondary\">Back</button>",
+      "css": ".ds-btn-secondary{font-family:Figtree,system-ui,sans-serif;background:transparent;border:2px solid #4a4a5e;color:#f2f1f7;padding:11px 24px;border-radius:999px;font-weight:700;font-size:15px;cursor:pointer}.ds-btn-secondary:hover{border-color:#f2f1f7}.ds-btn-secondary:focus-visible{outline:3px solid #f2f1f7;outline-offset:3px}"
+    },
+    {
+      "name": "Step Tabs",
+      "kind": "nav",
+      "refersTo": "nav-tab",
+      "description": "Step navigation pills; active is white.",
+      "html": "<nav class=\"ds-tabs\"><button>Video</button><button>Intent</button><button class=\"on\">Results</button><button disabled>Live</button></nav>",
+      "css": ".ds-tabs{display:flex;gap:6px}.ds-tabs button{font-family:Figtree,system-ui,sans-serif;background:#1d1d28;border:0;color:#b4b3c2;padding:10px 20px;border-radius:999px;font-size:15px;font-weight:600;cursor:pointer;transition:background .2s,color .2s}.ds-tabs button:hover:not(:disabled):not(.on){background:#2a2a38;color:#f2f1f7}.ds-tabs button.on{background:#f2f1f7;color:#14141c}.ds-tabs button:disabled{opacity:.4;cursor:not-allowed}.ds-tabs button:focus-visible{outline:3px solid #f2f1f7;outline-offset:3px}"
+    },
+    {
+      "name": "Select Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Raised-panel field with white focus border.",
+      "html": "<label class=\"ds-label\">Viewer</label><input class=\"ds-input\" type=\"text\" value=\"User 1\">",
+      "css": ".ds-label{font-family:Figtree,system-ui,sans-serif;display:block;font-size:14px;font-weight:600;color:#b4b3c2;margin-bottom:6px}.ds-input{font-family:Figtree,system-ui,sans-serif;width:100%;background:#1d1d28;border:2px solid transparent;color:#f2f1f7;padding:12px 14px;border-radius:12px;font-size:15px}.ds-input:hover{border-color:#2c2c3a}.ds-input:focus-visible{outline:none;border-color:#f2f1f7}"
+    },
+    {
+      "name": "Emotion Card",
+      "kind": "card",
+      "refersTo": "emotion-card",
+      "description": "Signature: flat emotion fill, ink shape, name and time. Click seeks.",
+      "html": "<button class=\"ds-card\" style=\"background:#ffd23f\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3a9 9 0 1 0 0 18a9 9 0 0 0 0-18z\" fill=\"currentColor\"/></svg><span class=\"ds-card-name\">Happy</span><span class=\"ds-card-time\">0:03</span></button> <button class=\"ds-card\" style=\"background:#ff7eb6\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z\" fill=\"currentColor\"/></svg><span class=\"ds-card-name\">Surprise</span><span class=\"ds-card-time\">0:15</span></button>",
+      "css": ".ds-card{font-family:Figtree,system-ui,sans-serif;display:inline-flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:4px;width:150px;height:92px;padding:12px 14px;border:0;border-radius:16px;color:#14141c;text-align:left;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .2s cubic-bezier(.16,1,.3,1),box-shadow .2s}.ds-card:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(0,0,0,.45)}.ds-card:focus-visible{outline:3px solid #f2f1f7;outline-offset:2px}.ds-card-name{font-size:18px;font-weight:900;line-height:1.1}.ds-card-time{font-size:13px;font-weight:700;opacity:.8}"
+    },
+    {
+      "name": "Emotion Picker Button",
+      "kind": "chip",
+      "refersTo": "emotion-button",
+      "description": "Shape plus name tile; filled variant takes the emotion colour.",
+      "html": "<button class=\"ds-emo\"><span style=\"color:#ff6b4a;display:inline-flex\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3L22 20H2z\" fill=\"currentColor\"/></svg></span>Angry</button> <button class=\"ds-emo on\" style=\"--e:#5aa2ff\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2.5C8 8 5.5 11 5.5 14.5a6.5 6.5 0 0 0 13 0C18.5 11 16 8 12 2.5z\" fill=\"currentColor\"/></svg>Sad</button>",
+      "css": ".ds-emo{font-family:Figtree,system-ui,sans-serif;display:inline-flex;align-items:center;gap:10px;border:2px solid transparent;background:#1d1d28;color:#f2f1f7;padding:14px 16px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;transition:background .2s,transform .2s}.ds-emo:hover{background:#2a2a38;transform:translateY(-1px)}.ds-emo.on{background:var(--e);color:#14141c;outline:3px solid #f2f1f7;outline-offset:2px}"
+    },
+    {
+      "name": "Match Strip",
+      "kind": "custom",
+      "refersTo": "emotion-card",
+      "description": "Landed (solid white rule) and Missed (dashed coral rule) verdicts between lanes.",
+      "html": "<div class=\"ds-strip\"><span class=\"ds-miss\">Missed</span><span class=\"ds-land\">Landed</span></div>",
+      "css": ".ds-strip{font-family:Figtree,system-ui,sans-serif;display:flex;gap:4px;width:360px}.ds-strip span{font-size:12px;font-weight:800;padding-top:4px}.ds-miss{flex:1;border-top:3px dashed #ff9a8a;color:#ff9a8a}.ds-land{flex:2;border-top:3px solid #f2f1f7;color:#f2f1f7}"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Tonal container for forms and charts.",
+      "html": "<section class=\"ds-panel\"><h2>Set the scene</h2><p>Upload a clip.</p></section>",
+      "css": ".ds-panel{font-family:Figtree,system-ui,sans-serif;background:#15151d;border-radius:20px;padding:28px;color:#f2f1f7}.ds-panel h2{font-size:26px;font-weight:900;letter-spacing:-.02em;margin:0 0 16px}.ds-panel p{margin:0;color:#b4b3c2}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Colour Verdict",
+    "overview": "The build is a near-black room (ground #0d0d12) in which the only saturated things are emotions. Chrome, type and controls are white and soft grey; every saturated field on screen is data. The Results screen is the centre of gravity: video at left, two rows of flat emotion cards sharing one time axis and one white playhead, with a Landed / Missed strip between them.\n\nThe voice is casual and plain, but the surface is disciplined: flat colour fields, ink-dark text on them, soft real shadows, no gradients in the authored CSS. Colour is data encoding: each emotion has one hex, one fixed shape, and a text label.",
+    "keyCharacteristics": [
+      "Dark ground, light chrome, saturated emotion fields as the only colour.",
+      "Pill-shaped controls, rounded rectangles for content, a large radius on video.",
+      "Flat fills with one soft shadow; depth by tonal layering of three dark surfaces.",
+      "Tabular numerals globally; huge heavy score numeral as the single display moment.",
+      "Every emotion mark = colour + shape + label."
+    ],
+    "rules": [
+      {
+        "name": "The Three-Signal Rule",
+        "body": "An emotion is never colour alone: hex from EMOTION_COLORS, path from EMOTION_SHAPES, and its name in text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Saturation Is Data Rule",
+        "body": "Saturated hues on screen mean an emotion. Chrome stays white and grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink-On-Colour Rule",
+        "body": "Text and marks on an emotion fill are ink, never white.",
+        "section": "colors"
+      },
+      {
+        "name": "The Heavy-Or-Plain Rule",
+        "body": "Headings and numerals go to 800-900; everything else stays at 400-700.",
+        "section": "typography"
+      },
+      {
+        "name": "The Name Beats Size Rule",
+        "body": "In narrow cards the name rotates to vertical text at 13px rather than dropping.",
+        "section": "typography"
+      },
+      {
+        "name": "The Soft Shadow Only Rule",
+        "body": "Shadows are blurred and dark; no offset, hard or coloured shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat Fill Rule",
+        "body": "Emotion fields are single flat colours. No gradients on emotion colours.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do pair every emotion colour with its fixed shape and a text label.",
+      "Do use ink (#14141c) for text and marks on emotion fills.",
+      "Do keep chrome white and grey so saturated colour always means an emotion.",
+      "Do read colours from EMOTION_COLORS / --e-*; read shapes from EMOTION_SHAPES.",
+      "Do use pills for buttons and tabs, 16px for emotion cards, 24px for video.",
+      "Do make Landed and Missed legible without colour (word plus solid vs dashed rule).",
+      "Do keep the webcam preview small (220px) and quiet during Watch."
+    ],
+    "donts": [
+      "Don't use an emotion colour for decoration or branding; it reads as data.",
+      "Don't use gradients, hard offset shadows, or coloured shadows.",
+      "Don't put white text on an emotion fill.",
+      "Don't mix a second typeface or intermediate display weights.",
+      "Don't build a generic analytics dashboard of stat tiles; the comparison is the two-lane card graph."
+    ]
+  }
+}

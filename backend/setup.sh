@@ -1,4 +1,4 @@
-
+#!/usr/bin/env bash
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -15,11 +15,11 @@ else
   exit 1
 fi
 
-
+# Use the env's Python for pip — avoids macOS 'pip' pointing at Python 3.9.
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
-
+# py-feat pulls in torchcodec, which needs ffmpeg at import time.
 if ! python -c "from feat import Detectorv2" 2>/dev/null; then
   echo "Installing ffmpeg (required by py-feat)..."
   if command -v conda >/dev/null 2>&1 && [[ -n "${CONDA_DEFAULT_ENV:-}" ]]; then

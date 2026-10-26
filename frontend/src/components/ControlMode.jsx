@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react'
 import { api } from '../api.js'
-import { EMOTIONS, colorFor } from '../emotions.js'
+import { EMOTIONS, colorFor, emotionLabel } from '../emotions.js'
 import { formatTime } from './Timeline.jsx'
+import EmotionMark from './EmotionMark.jsx'
+import VideoFrame from './VideoFrame.jsx'
 
 export default function ControlMode({ scene, onSaved }) {
   const videoRef = useRef(null)
@@ -51,77 +53,80 @@ export default function ControlMode({ scene, onSaved }) {
   }
 
   return (
-    <div className="panel">
-      <h2>Control mode — mark the intended emotion</h2>
-      <p className="status-line" style={{ marginTop: -8, marginBottom: 16 }}>
-        Play the scene. Click an emotion when you want the audience to start feeling it, let it play, then click
-        "End tag" at the moment that feeling should have passed.
-      </p>
-
-      {error && <div className="error-box">{error}</div>}
-
-      <video
+    <div className="split-layout">
+      <VideoFrame
         ref={videoRef}
         src={scene.video_url}
-        controls
+        title={scene.title}
+        caption={`Now at ${formatTime(currentTime)}`}
         onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
       />
-      <p className="status-line">Current time: {formatTime(currentTime)}</p>
 
-      <h3 style={{ marginTop: 20 }}>Intensity: {intensity}</h3>
-      <input
-        type="range"
-        min="1"
-        max="5"
-        value={intensity}
-        onChange={(e) => setIntensity(parseInt(e.target.value))}
-        style={{ width: '100%', marginBottom: 16 }}
-      />
+      <section className="split-main">
+        <h1>What should people feel?</h1>
+        <p className="lede">
+          Play the video. When you want a feeling to start, tap it. Let it play, then tap "End tag" where that
+          feeling should have passed.
+        </p>
 
-      <div className="emotion-buttons">
-        {EMOTIONS.map((emotion) => (
-          <button
-            key={emotion}
-            className={`emotion-btn ${openTag?.emotion === emotion ? 'active' : ''}`}
-            style={{ '--dot-color': colorFor(emotion) }}
-            onClick={() => startTag(emotion)}
-            disabled={!!openTag}
-          >
-            <span style={{ background: colorFor(emotion), width: 8, height: 8, borderRadius: '50%', display: 'inline-block', marginRight: 6 }} />
-            {emotion}
-          </button>
-        ))}
-      </div>
+        {error && <div className="error-box">{error}</div>}
 
-      {openTag && (
-        <div className="tag-row" style={{ marginBottom: 16 }}>
-          <span>
-            Tagging <strong style={{ color: colorFor(openTag.emotion) }}>{openTag.emotion}</strong> from{' '}
-            {formatTime(openTag.start_time)}…
-          </span>
-          <button className="secondary" onClick={endTag}>End tag</button>
+        <h3>How strong? <span className="inline-value">{intensity} of 5</span></h3>
+        <input
+          type="range"
+          min="1"
+          max="5"
+          value={intensity}
+          onChange={(e) => setIntensity(parseInt(e.target.value))}
+          aria-label="Intensity from 1 to 5"
+          style={{ width: '100%', marginBottom: 20 }}
+        />
+
+        <div className="emotion-buttons">
+          {EMOTIONS.map((emotion) => (
+            <button
+              key={emotion}
+              className={`emotion-btn emotion-btn--filled ${openTag?.emotion === emotion ? 'active' : ''}`}
+              style={{ '--emotion': colorFor(emotion) }}
+              onClick={() => startTag(emotion)}
+              disabled={!!openTag}
+            >
+              <EmotionMark emotion={emotion} size={18} ink />
+              {emotionLabel(emotion)}
+            </button>
+          ))}
         </div>
-      )}
 
-      <h3>Tags added ({tags.length})</h3>
-      <div className="tag-list">
-        {tags.map((tag, i) => (
-          <div className="tag-row" key={i}>
+        {openTag && (
+          <div className="tag-row tag-row--open">
             <span>
-              <span className="swatch" style={{ background: colorFor(tag.emotion) }} />
-              {tag.emotion} · {formatTime(tag.start_time)}–{formatTime(tag.end_time)} · intensity {tag.intensity}
+              Tagging <strong style={{ color: colorFor(openTag.emotion) }}>{emotionLabel(openTag.emotion)}</strong> from{' '}
+              {formatTime(openTag.start_time)}…
             </span>
-            <button className="danger-outline" onClick={() => removeTag(i)}>Remove</button>
+            <button className="primary" onClick={endTag}>End tag</button>
           </div>
-        ))}
-        {tags.length === 0 && <p className="status-line">No tags yet.</p>}
-      </div>
+        )}
 
-      <div style={{ marginTop: 20 }}>
-        <button className="primary" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save control session (admin)'}
-        </button>
-      </div>
+        <h3>Tags added ({tags.length})</h3>
+        <div className="tag-list">
+          {tags.map((tag, i) => (
+            <div className="tag-row tag-card" key={i} style={{ background: colorFor(tag.emotion) }}>
+              <span className="tag-what">
+                <EmotionMark emotion={tag.emotion} size={16} ink />
+                {emotionLabel(tag.emotion)} · {formatTime(tag.start_time)}–{formatTime(tag.end_time)} · strength {tag.intensity}
+              </span>
+              <button className="danger-outline" onClick={() => removeTag(i)}>Remove</button>
+            </div>
+          ))}
+          {tags.length === 0 && <p className="status-line">No tags yet.</p>}
+        </div>
+
+        <div className="action-row">
+          <button className="primary" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save and continue'}
+          </button>
+        </div>
+      </section>
     </div>
   )
 }

@@ -83,6 +83,21 @@ class EmotionSample(BaseModel):
     dominant_emotion: Optional[str] = None
     emotion_probabilities: Optional[dict] = None
     face_detected: bool = False
+    focus_intensity: Optional[float] = None
+    action_units: Optional[dict] = None
+    au_intensities: Optional[dict] = None
+    au_presence: Optional[dict] = None
+    au_schema: Optional[dict] = None
+
+
+class AuScoringConfig(BaseModel):
+    enabled: bool = True
+    signal_mode: str = "emotion"  # emotion | au | combined
+    normalization: str = "zscore"  # none | zscore | minmax
+    smooth: Optional[str] = None  # None | sma | savgol
+    smooth_window: int = 5
+    gate_by_presence: bool = False
+    include_focus_in_au_vector: bool = True
 
 
 class PauseEvent(BaseModel):
@@ -121,6 +136,7 @@ class CalibrationSessionCreate(BaseModel):
 class ScoreRequest(BaseModel):
     test_session_id: int
     control_session_id: int
+    au_config: Optional[AuScoringConfig] = None
 
 
 # scenes
@@ -274,6 +290,7 @@ def score(body: ScoreRequest):
         test_session["samples"],
         duration,
         calibration=test_session.get("calibration"),
+        au_config=body.au_config.dict() if body.au_config else None,
     )
     result_id = database.save_score_result(body.test_session_id, body.control_session_id, result)
     result["id"] = result_id

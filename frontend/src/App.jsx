@@ -7,7 +7,16 @@ import TestMode from './components/TestMode.jsx'
 import ResultsDashboard from './components/ResultsDashboard.jsx'
 import LiveDetector from './components/LiveDetector.jsx'
 
+// Internal tab ids stay the same; the labels are what people read.
 const TABS = ['Scenes', 'Control', 'Calibration', 'Test', 'Results', 'Live']
+const TAB_LABELS = {
+  Scenes: 'Video',
+  Control: 'Intent',
+  Calibration: 'Warm-up',
+  Test: 'Watch',
+  Results: 'Results',
+  Live: 'Live',
+}
 
 export default function App() {
   const [scenes, setScenes] = useState([])
@@ -52,21 +61,30 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <h1>Reel<span>Reaction</span></h1>
-        <div className="tagline">emotion testing for film scenes</div>
+        <nav className="nav-tabs" aria-label="Steps">
+          {TABS.map((tab, i) => {
+            const locked = tab !== 'Scenes' && tab !== 'Live' && !selectedScene
+            const done = !locked && tab !== 'Live' && TABS.indexOf(activeTab) > i && activeTab !== 'Live'
+            return (
+              <button
+                key={tab}
+                className={`${activeTab === tab ? 'active' : ''} ${done ? 'done' : ''}`}
+                onClick={() => setActiveTab(tab)}
+                disabled={locked}
+                aria-current={activeTab === tab ? 'step' : undefined}
+              >
+                {TAB_LABELS[tab]}
+              </button>
+            )
+          })}
+        </nav>
       </header>
 
-      <nav className="nav-tabs">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            className={activeTab === tab ? 'active' : ''}
-            onClick={() => setActiveTab(tab)}
-            disabled={tab !== 'Scenes' && tab !== 'Live' && !selectedScene}
-          >
-            {tab}
-          </button>
-        ))}
-      </nav>
+      {selectedScene && activeTab !== 'Scenes' && activeTab !== 'Live' && (
+        <p className="scene-crumb">
+          Testing <strong>{selectedScene.title}</strong>
+        </p>
+      )}
 
       {activeTab === 'Scenes' && (
         <SceneSetup
@@ -103,6 +121,7 @@ export default function App() {
         <TestMode
           scene={selectedScene}
           calibrationSessions={calibrationSessions}
+          testSessions={testSessions}
           onSaved={async () => {
             await refreshSessions(selectedScene)
             setActiveTab('Results')
@@ -116,6 +135,7 @@ export default function App() {
           controlSessions={controlSessions}
           calibrationSessions={calibrationSessions}
           testSessions={testSessions}
+          onGo={setActiveTab}
         />
       )}
 

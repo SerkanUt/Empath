@@ -1,5 +1,6 @@
 import React from 'react'
-import { colorFor, EMOTIONS } from '../emotions.js'
+import { colorFor, EMOTIONS, emotionLabel } from '../emotions.js'
+import EmotionMark from './EmotionMark.jsx'
 
 
 export default function Timeline({ label, curve, duration }) {
@@ -31,8 +32,8 @@ export function Legend() {
     <div className="legend">
       {EMOTIONS.map((e) => (
         <div className="item" key={e}>
-          <span className="swatch" style={{ background: colorFor(e) }} />
-          {e}
+          <EmotionMark emotion={e} size={14} />
+          {emotionLabel(e)}
         </div>
       ))}
     </div>
