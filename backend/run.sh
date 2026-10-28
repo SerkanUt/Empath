@@ -18,4 +18,4 @@ if ! python -c 'import feat' 2>/dev/null; then
 fi
 
 echo "Starting API with $(which python) ($(python --version))"
-exec python -m uvicorn main:app --reload --port 8000
+exec python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000

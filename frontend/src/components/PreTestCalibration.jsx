@@ -29,6 +29,7 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
   const canvasRef = useRef(document.createElement('canvas'))
   const streamRef = useRef(null)
   const samplesRef = useRef([])
+  const inFlightRef = useRef(false)
   const intervalRef = useRef(null)
   const playingRef = useRef(false)
 
@@ -94,8 +95,10 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
 
   async function sampleTick() {
     if (!playingRef.current) return
+    if (inFlightRef.current) return
     const frame = captureFrameBase64()
     if (!frame) return
+    inFlightRef.current = true
     try {
       const result = await api.detectEmotion(frame)
       if (!result) return
@@ -125,6 +128,8 @@ export default function PreTestCalibration({ viewerLabel, saving = false, error:
         emotion_probabilities: { distracted: 1.0 },
         face_detected: false,
       })
+    } finally {
+      inFlightRef.current = false
     }
   }
 

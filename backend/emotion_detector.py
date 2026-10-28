@@ -10,6 +10,7 @@ import base64
 import io
 import math
 import os
+import threading
 import re
 import tempfile
 
@@ -60,6 +61,10 @@ HAPPY_DAMPEN_SCALE = 0.85
 HAPPY_DISPLAY_CAP = 0.85
 
 
+_detector_lock = threading.RLock()
+_detect_lock = threading.Lock()
+
+
 def _pick_device() -> str:
     try:
         import torch
@@ -75,11 +80,12 @@ def _pick_device() -> str:
 
 def _get_detector():
     global _detector
-    if _detector is None:
-        from feat import Detectorv2
+    with _detector_lock:
+        if _detector is None:
+            from feat import Detectorv2
 
-        # Skip identity embeddings — faster load, one less non-commercial branch.
-        _detector = Detectorv2(device=_pick_device(), identity_model=None)
+            # Skip identity embeddings — faster load, one less non-commercial branch.
+            _detector = Detectorv2(device=_pick_device(), identity_model=None)
     return _detector
 
 
@@ -272,8 +278,11 @@ def decode_base64_image(image_base64: str) -> np.ndarray:
     """Accepts a data URL or raw base64 string, returns an RGB numpy array."""
     if "," in image_base64:
         image_base64 = image_base64.split(",", 1)[1]
-    raw = base64.b64decode(image_base64)
-    img = Image.open(io.BytesIO(raw)).convert("RGB")
+    try:
+        raw = base64.b64decode(image_base64)
+        img = Image.open(io.BytesIO(raw)).convert("RGB")
+    except (ValueError, OSError) as e:
+        raise ValueError(f"invalid image data: {e}") from e
     return np.array(img)
 
 
@@ -316,7 +325,8 @@ def detect_emotion_from_array(image: np.ndarray) -> dict:
 
     try:
         os.environ.setdefault("TQDM_DISABLE", "1")
-        fex = detector.detect(tmp_path, data_type="image")
+        with _detect_lock:
+            fex = detector.detect(tmp_path, data_type="image")
     finally:
         os.unlink(tmp_path)
 
@@ -332,6 +342,8 @@ def detect_emotion_from_array(image: np.ndarray) -> dict:
 
     au_frame = _au_frame_from_row(row, schema)
     probs = _probs_from_row(row, schema)
+    if any(isinstance(v, float) and math.isnan(v) for v in probs.values()):
+        return _distracted_result()
     dominant = _resolve_dominant_emotion(probs)
     focus_intensity = probs["focus"] * FOCUS_INTENSITY_SCALE
 

@@ -12,6 +12,7 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
   const webcamVideoRef = useRef(null)
   const canvasRef = useRef(document.createElement('canvas'))
   const samplesRef = useRef([])
+  const inFlightRef = useRef(false)
   const pauseEventsRef = useRef([])
   const intervalRef = useRef(null)
   const streamRef = useRef(null)
@@ -23,6 +24,7 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
   const [sampleCount, setSampleCount] = useState(0)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [consented, setConsented] = useState(false)
 
   const useCalibration = selectedCalibrationId !== NO_CALIBRATION
   const selectedCalibration = useCalibration
@@ -90,8 +92,10 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
   async function sampleTick() {
     const video = videoRef.current
     if (!video || video.paused) return
+    if (inFlightRef.current) return
     const frame = captureFrameBase64()
     if (!frame) return
+    inFlightRef.current = true
     const timestamp = video.currentTime
     try {
       const result = await api.detectEmotion(frame)
@@ -118,9 +122,12 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
       samplesRef.current.push({
         timestamp,
         dominant_emotion: 'distracted',
-        emotion_probabilities: { distracted: 1.0 },
+        emotion_probabilities: null,
         face_detected: false,
+        error: true, // request failed, not a viewer signal; excluded from scoring
       })
+    } finally {
+      inFlightRef.current = false
     }
   }
 
@@ -169,6 +176,8 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
         viewer_label: viewerLabel,
         ...(calibration ? { calibration } : {}),
       })
+      stopWebcam()
+      setWebcamReady(false)
       onSaved(session)
     } catch (err) {
       setError(err.message)
@@ -213,11 +222,23 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
           )}
           <video ref={webcamVideoRef} autoPlay muted playsInline />
           {!webcamReady && (
-            <button className="secondary webcam-start" onClick={startWebcam}>
+            <button className="secondary webcam-start" onClick={startWebcam} disabled={!consented}>
               Start webcam
             </button>
           )}
         </div>
+
+        {!webcamReady && (
+          <label className="consent-line">
+            <input
+              type="checkbox"
+              checked={consented}
+              onChange={(e) => setConsented(e.target.checked)}
+            />{' '}
+            The viewer agrees to have their face read through the webcam while watching. Only emotion
+            scores are saved, never the video, and the session can be deleted afterward.
+          </label>
+        )}
 
         <label htmlFor="cal-pick">Warm-up (optional)</label>
         <select
@@ -275,7 +296,7 @@ export default function TestMode({ scene, calibrationSessions, testSessions, onS
 
         <div className="status-line">
           Samples captured: {sampleCount}
-          {lastEmotion && (
+          {lastEmotion && !running && (
             <>
               {' · Last read: '}
               <strong style={{ color: colorFor(lastEmotion) }}>{emotionLabel(lastEmotion)}</strong>

@@ -19,7 +19,7 @@ function verdictFor(segments) {
   return lead + detail
 }
 
-export default function ResultsDashboard({ scene, controlSessions, calibrationSessions, testSessions, onGo }) {
+export default function ResultsDashboard({ scene, controlSessions, calibrationSessions, testSessions, onGo, onSessionsChanged }) {
   const videoRef = useRef(null)
   const [controlId, setControlId] = useState(controlSessions[0]?.id || null)
   const [testId, setTestId] = useState(testSessions[0]?.id || null)
@@ -35,6 +35,18 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
   useEffect(() => {
     setTestId(testSessions[0]?.id || null)
   }, [testSessions])
+
+  async function deleteSession(id) {
+    if (!window.confirm(`Delete test session #${id}? This can't be undone.`)) return
+    setError(null)
+    try {
+      await api.deleteTestSession(id)
+      setResult(null)
+      await onSessionsChanged?.()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   async function runComparison() {
     if (!controlId || !testId) return
@@ -312,6 +324,8 @@ function SessionSummary({ controlSessions, calibrationSessions, testSessions }) 
                 <li key={t.id}>
                   #{t.id} · {t.viewer_label || 'Unlabeled'} · {t.samples.length} samples
                   {t.calibration ? ' · calibrated' : ' · uncalibrated'}
+                  {' '}
+                  <button className="secondary" onClick={() => deleteSession(t.id)}>Delete</button>
                 </li>
               ))}
             </ul>

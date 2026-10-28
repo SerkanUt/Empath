@@ -10,6 +10,7 @@ DB_PATH = Path(__file__).parent / "emotion_tester.db"
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys=ON")
     return conn
 
 
@@ -236,3 +237,33 @@ def save_score_result(test_session_id: int, control_session_id: int, result: dic
     result_id = cur.lastrowid
     conn.close()
     return result_id
+
+
+def delete_test_session(session_id: int) -> bool:
+    conn = get_conn()
+    try:
+        conn.execute("DELETE FROM score_results WHERE test_session_id = ?", (session_id,))
+        cur = conn.execute("DELETE FROM test_sessions WHERE id = ?", (session_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def delete_scene(scene_id: int) -> bool:
+    """Deletes a scene and every session that references it."""
+    conn = get_conn()
+    try:
+        conn.execute(
+            "DELETE FROM score_results WHERE test_session_id IN "
+            "(SELECT id FROM test_sessions WHERE scene_id = ?) "
+            "OR control_session_id IN (SELECT id FROM control_sessions WHERE scene_id = ?)",
+            (scene_id, scene_id),
+        )
+        for table in ("test_sessions", "control_sessions", "calibration_sessions"):
+            conn.execute(f"DELETE FROM {table} WHERE scene_id = ?", (scene_id,))
+        cur = conn.execute("DELETE FROM scenes WHERE id = ?", (scene_id,))
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()

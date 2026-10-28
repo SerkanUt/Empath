@@ -39,6 +39,7 @@ export const api = {
   createCalibrationSession: (sceneId, data) =>
     request(`/scenes/${sceneId}/calibration-sessions`, { method: 'POST', body: JSON.stringify(data) }),
 
+  deleteTestSession: (id) => request(`/test-sessions/${id}`, { method: 'DELETE' }),
   listTestSessions: (sceneId) => request(`/scenes/${sceneId}/test-sessions`),
   createTestSession: (sceneId, data) =>
     request(`/scenes/${sceneId}/test-sessions`, { method: 'POST', body: JSON.stringify(data) }),

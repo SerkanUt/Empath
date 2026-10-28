@@ -196,6 +196,7 @@ def build_observed_curve(samples: list, duration: float, calibration: dict = Non
             peak = max(float(calibration["peak_probability"]), 0.05)
 
     n_steps = max(1, int(math.ceil(duration / STEP)))
+    samples = [s for s in samples if not s.get("error")]
     sorted_samples = sorted(samples, key=lambda s: s["timestamp"])
     curve = []
     idx = 0
@@ -276,6 +277,7 @@ def windowed_segment_scores(tags: list, samples: list, lag_tolerance: float = 2.
     directly readable: "did segment X land or not."
     """
     results = []
+    samples = [s for s in samples if not s.get("error")]
     for tag in tags:
         window_start = tag["start_time"]
         window_end = tag["end_time"] + lag_tolerance

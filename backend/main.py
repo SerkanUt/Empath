@@ -21,7 +21,7 @@ app = FastAPI(title="Emotion Film Tester API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -47,6 +47,9 @@ def _check_detector_dependencies():
 @app.on_event("startup")
 def verify_dependencies():
     _check_detector_dependencies()
+    from emotion_detector import _get_detector
+
+    _get_detector()  # load weights now so the first webcam frames don't stall
 
 
 def get_video_duration(path: Path) -> Optional[float]:
@@ -88,6 +91,7 @@ class EmotionSample(BaseModel):
     au_intensities: Optional[dict] = None
     au_presence: Optional[dict] = None
     au_schema: Optional[dict] = None
+    error: bool = False  # detection request failed; excluded from scoring
 
 
 class AuScoringConfig(BaseModel):
@@ -164,6 +168,25 @@ async def upload_scene_video(file: UploadFile = File(...)):
         "duration": duration,
         "filename": file.filename,
     }
+
+
+@app.delete("/scenes/{scene_id}")
+def delete_scene(scene_id: int):
+    scene = database.get_scene(scene_id)
+    if not scene:
+        raise HTTPException(404, "Scene not found")
+    database.delete_scene(scene_id)
+    video_url = scene["video_url"]
+    if video_url.startswith("/api/media/"):
+        (MEDIA_DIR / Path(video_url).name).unlink(missing_ok=True)
+    return {"deleted": scene_id}
+
+
+@app.delete("/test-sessions/{session_id}")
+def delete_test_session(session_id: int):
+    if not database.delete_test_session(session_id):
+        raise HTTPException(404, "Test session not found")
+    return {"deleted": session_id}
 
 
 @app.post("/scenes")
@@ -267,8 +290,10 @@ def get_test_session(session_id: int):
 def detect_emotion(body: DetectRequest):
     try:
         return detect_emotion_from_base64(body.image_base64)
-    except Exception as e:
+    except ValueError as e:
         raise HTTPException(400, f"Could not process frame: {e}")
+    except Exception as e:
+        raise HTTPException(500, f"Emotion detection failed: {e}")
 
 
 # scoring

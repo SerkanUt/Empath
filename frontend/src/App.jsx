@@ -136,6 +136,7 @@ export default function App() {
           calibrationSessions={calibrationSessions}
           testSessions={testSessions}
           onGo={setActiveTab}
+          onSessionsChanged={() => refreshSessions(selectedScene)}
         />
       )}
 
