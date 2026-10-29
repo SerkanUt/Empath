@@ -6,18 +6,13 @@ import EmotionCards from './EmotionCards.jsx'
 import EmotionMark from './EmotionMark.jsx'
 import VideoFrame from './VideoFrame.jsx'
 import { emotionLabel } from '../emotions.js'
+import { verdictFor } from '../verdict.js'
 
-function verdictFor(segments) {
-  if (!segments || segments.length === 0) return null
-  const landed = segments.filter((s) => s.match).length
-  const firstMiss = segments.find((s) => !s.match)
-  if (landed === segments.length) return 'Every moment landed. Nice work.'
-  const lead = `${landed} of ${segments.length} moments landed.`
-  const detail = firstMiss
-    ? ` At ${formatTime(firstMiss.start_time)} you wanted ${emotionLabel(firstMiss.intended_emotion)}, and they showed ${firstMiss.observed_emotion ? emotionLabel(firstMiss.observed_emotion) : 'nothing clear'}.`
-    : ''
-  return lead + detail
-}
+const SIGNAL_MODES = [
+  { value: 'emotion', label: 'Emotions' },
+  { value: 'au', label: 'Facial movements' },
+  { value: 'combined', label: 'Both' },
+]
 
 export default function ResultsDashboard({ scene, controlSessions, calibrationSessions, testSessions, onGo, onSessionsChanged }) {
   const videoRef = useRef(null)
@@ -27,6 +22,7 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+  const [signalMode, setSignalMode] = useState('emotion')
 
   useEffect(() => {
     setControlId(controlSessions[0]?.id || null)
@@ -53,7 +49,7 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
     setLoading(true)
     setError(null)
     try {
-      const res = await api.score(testId, controlId)
+      const res = await api.score(testId, controlId, signalMode === 'emotion' ? undefined : { signal_mode: signalMode })
       setResult(res)
     } catch (err) {
       setError(err.message)
@@ -97,7 +93,7 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
     )
   }
 
-  const verdict = result ? verdictFor(result.segment_scores) : null
+  const verdict = result ? verdictFor(result) : null
 
   return (
     <div className="results-layout">
@@ -113,7 +109,14 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
         <header className="results-head">
           <div>
             <h1>{result ? 'Did it land?' : 'Compare what you meant with what they felt'}</h1>
-            {verdict && <p className="lede">{verdict}</p>}
+            {verdict && <p className="lede">{verdict.headline}</p>}
+            {verdict && verdict.notes.length > 0 && (
+              <ul className="verdict-notes">
+                {verdict.notes.map((n, i) => (
+                  <li key={i}>{n}</li>
+                ))}
+              </ul>
+            )}
           </div>
           {result && (
             <div className="score-big" aria-label={`Match score ${result.dtw_accuracy_score} percent`}>
@@ -143,6 +146,14 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
                   {t.viewer_label || `#${t.id}`}
                   {t.calibration ? ' · warmed up' : ' · no warm-up'}
                 </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="signal-pick">Compare by</label>
+            <select id="signal-pick" value={signalMode} onChange={(e) => setSignalMode(e.target.value)}>
+              {SIGNAL_MODES.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
           </div>
@@ -211,6 +222,15 @@ export default function ResultsDashboard({ scene, controlSessions, calibrationSe
 
               <dl className="score-rows">
                 <div><dt>DTW-aligned accuracy</dt><dd>{result.dtw_accuracy_score}%</dd></div>
+                {result.coverage && (
+                  <div>
+                    <dt>Readings used</dt>
+                    <dd>
+                      {result.coverage.usable_samples} of ~{result.coverage.expected_samples}
+                      {result.coverage.error_samples > 0 && ` (${result.coverage.error_samples} failed)`}
+                    </dd>
+                  </div>
+                )}
                 <div><dt>Windowed segment match</dt><dd>{result.windowed_accuracy_score ?? '—'}%</dd></div>
                 {result.intensity_alignment_score != null && (
                   <div><dt>Intensity alignment</dt><dd>{result.intensity_alignment_score}%</dd></div>

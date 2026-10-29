@@ -316,6 +316,7 @@ def score(body: ScoreRequest):
         duration,
         calibration=test_session.get("calibration"),
         au_config=body.au_config.dict() if body.au_config else None,
+        pause_events=test_session.get("pause_events"),
     )
     result_id = database.save_score_result(body.test_session_id, body.control_session_id, result)
     result["id"] = result_id

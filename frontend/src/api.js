@@ -47,9 +47,13 @@ export const api = {
   detectEmotion: (imageBase64) =>
     request('/detect-emotion', { method: 'POST', body: JSON.stringify({ image_base64: imageBase64 }) }),
 
-  score: (testSessionId, controlSessionId) =>
+  score: (testSessionId, controlSessionId, auConfig) =>
     request('/score', {
       method: 'POST',
-      body: JSON.stringify({ test_session_id: testSessionId, control_session_id: controlSessionId }),
+      body: JSON.stringify({
+        test_session_id: testSessionId,
+        control_session_id: controlSessionId,
+        ...(auConfig ? { au_config: auConfig } : {}),
+      }),
     }),
 }

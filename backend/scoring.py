@@ -26,6 +26,13 @@ EMOTIONS = [
     "distracted",
 ]
 STEP = 0.5  # seconds; resampling resolution for curve comparison
+MAX_HOLD_SECONDS = 3.0  # how long the last sample may stand in for missing data
+SAMPLE_INTERVAL = 0.5  # seconds between webcam reads while recording (frontend SAMPLE_INTERVAL_MS)
+SEEK_EXCLUDE_SECONDS = 1.5  # samples right after a seek reflect the jump, not the scene
+# Probability a viewer with a blank face typically gets for "neutral"; the
+# do-nothing viewer used as the zero point of the DTW accuracy score.
+BASELINE_NEUTRAL_PROB = 0.8
+MIN_BASELINE_DISTANCE = 0.25  # keeps the score stable for near-neutral control tracks
 
 DEFAULT_AU_CONFIG = {
     "enabled": True,
@@ -107,6 +114,32 @@ def _mean_observed_intensity(samples: list, emotion: str, start: float, end: flo
     if not values:
         return None
     return round(sum(values) / len(values), 1)
+
+
+def filter_samples(samples: list, pause_events: list = None) -> list:
+    """Drops failed-request samples and those taken just after a seek."""
+    seeks = [e["timestamp"] for e in (pause_events or []) if e.get("action") == "seek"]
+    return [
+        s for s in samples
+        if not s.get("error")
+        and not any(t <= s["timestamp"] < t + SEEK_EXCLUDE_SECONDS for t in seeks)
+    ]
+
+
+def sample_coverage(raw_samples: list, usable_samples: list, duration: float) -> dict:
+    """
+    How much real viewer data backs a score. A near-empty session otherwise
+    looks like a match whenever the control track is mostly neutral.
+    """
+    expected = max(1, int(duration / SAMPLE_INTERVAL))
+    faces = sum(1 for s in usable_samples if s.get("face_detected"))
+    return {
+        "expected_samples": expected,
+        "usable_samples": len(usable_samples),
+        "error_samples": sum(1 for s in raw_samples if s.get("error")),
+        "coverage": round(min(1.0, len(usable_samples) / expected), 2),
+        "face_share": round(faces / len(usable_samples), 2) if usable_samples else 0.0,
+    }
 
 
 def build_control_curve(tags: list, duration: float) -> list:
@@ -200,11 +233,14 @@ def build_observed_curve(samples: list, duration: float, calibration: dict = Non
     sorted_samples = sorted(samples, key=lambda s: s["timestamp"])
     curve = []
     idx = 0
-    last_vec = _label_to_vector("neutral", intensity=2)
+    default_vec = _label_to_vector("neutral", intensity=2)
+    last_vec = default_vec
+    last_ts = None
     for i in range(n_steps):
         t = i * STEP
         while idx < len(sorted_samples) and sorted_samples[idx]["timestamp"] <= t:
             s = sorted_samples[idx]
+            last_ts = s["timestamp"]
             if s.get("emotion_probabilities"):
                 last_vec = {e: s["emotion_probabilities"].get(e, 0.0) for e in EMOTIONS}
                 if peaks is not None:
@@ -218,6 +254,11 @@ def build_observed_curve(samples: list, duration: float, calibration: dict = Non
                 # No face in frame (looking away / off-screen) counts as distracted.
                 last_vec = _label_to_vector("distracted", intensity=4)
             idx += 1
+        # Long gaps (paused, dropped frames) carry no information; don't let a
+        # stale reaction stand in for them.
+        if last_ts is not None and t - last_ts > MAX_HOLD_SECONDS:
+            last_vec = default_vec
+            last_ts = None
         curve.append(dict(last_vec))
     return curve
 
@@ -269,6 +310,12 @@ def dtw_align(seq_a: list, seq_b: list, max_warp_seconds: float = 3.0, keys: lis
     return total, normalized, cost
 
 
+def dtw_accuracy(normalized_dist: float, baseline_dist: float = None) -> float:
+    """Maps a normalized DTW distance to 0-100, relative to a do-nothing baseline."""
+    scale = baseline_dist if baseline_dist else 1.2  # legacy: distances rarely exceed ~1.2
+    return max(0.0, 100.0 * (1 - min(normalized_dist / scale, 1.0)))
+
+
 def windowed_segment_scores(tags: list, samples: list, lag_tolerance: float = 2.0, calibration: dict = None) -> list:
     """
     For each control-tagged segment, check whether the test viewer's
@@ -294,10 +341,18 @@ def windowed_segment_scores(tags: list, samples: list, lag_tolerance: float = 2.
                 e = "distracted"
             observed_counts[e] = observed_counts.get(e, 0) + 1
 
-        observed_dominant = (
-            max(observed_counts, key=observed_counts.get) if observed_counts else None
-        )
+        observed_dominant = None
+        if observed_counts:
+            def _rank(e):
+                mean_prob = sum(_emotion_prob(s, e) for s in window_samples) / len(window_samples)
+                # most frequent label, then higher mean probability, then fixed order
+                return (observed_counts[e], mean_prob, -EMOTIONS.index(e) if e in EMOTIONS else -len(EMOTIONS))
+            observed_dominant = max(observed_counts, key=_rank)
         match = observed_dominant == tag["emotion"]
+        match_share = (
+            round(observed_counts.get(tag["emotion"], 0) / len(window_samples), 2)
+            if window_samples else None
+        )
         intended_intensity = tag.get("intensity", 3)
         observed_intensity = _mean_observed_intensity(
             samples,
@@ -313,6 +368,7 @@ def windowed_segment_scores(tags: list, samples: list, lag_tolerance: float = 2.
             "intended_emotion": tag["emotion"],
             "observed_emotion": observed_dominant,
             "match": match,
+            "match_share": match_share,
             "samples_in_window": len(window_samples),
             "intended_intensity": intended_intensity,
             "observed_intensity": observed_intensity,
@@ -338,8 +394,11 @@ def compute_score(
     duration: float,
     calibration: dict = None,
     au_config: dict = None,
+    pause_events: list = None,
 ) -> dict:
     cfg = _resolve_au_config(au_config)
+    raw_samples = samples
+    samples = filter_samples(samples, pause_events)
     control_curve = build_control_curve(tags, duration)
     observed_curve = build_observed_curve(samples, duration, calibration=calibration)
 
@@ -403,11 +462,18 @@ def compute_score(
         total_dist, normalized_dist, _ = dtw_align(control_curve, observed_curve)
         dtw_label = "emotion"
 
-    # Convert normalized distance (0 = identical, larger = more different)
-    # into a 0-100 "accuracy" score. Max per-step vector distance is
-    # sqrt(2) for two unit-ish vectors in disjoint emotions; empirically
-    # normalized_dist rarely exceeds ~1.2, so we clip and scale against that.
-    accuracy_score = max(0.0, 100.0 * (1 - min(normalized_dist / 1.2, 1.0)))
+    # 0-100 "accuracy": 100 = identical to the intended curve, 0 = no better
+    # than a viewer who shows nothing at all. Only the emotion signal has a
+    # defined do-nothing baseline; AU/combined signals keep the legacy scale.
+    baseline_dist = None
+    if dtw_label == "emotion":
+        baseline_curve = [
+            _label_to_vector("neutral", intensity=5 * BASELINE_NEUTRAL_PROB)
+            for _ in observed_curve
+        ]
+        _, baseline_dist, _ = dtw_align(control_curve, baseline_curve)
+        baseline_dist = max(baseline_dist, MIN_BASELINE_DISTANCE)
+    accuracy_score = dtw_accuracy(normalized_dist, baseline_dist)
 
     segments = windowed_segment_scores(tags, samples, calibration=calibration)
     matched = sum(1 for s in segments if s["match"])
@@ -424,10 +490,12 @@ def compute_score(
         intensity_alignment = round(max(0.0, 100.0 * (1 - mean_abs_delta / 5.0)), 1)
 
     out = {
+        "coverage": sample_coverage(raw_samples, samples, duration),
         "dtw_signal": dtw_label,
         "dtw_total_distance": total_dist,
         "dtw_normalized_distance": normalized_dist,
         "dtw_accuracy_score": round(accuracy_score, 1),
+        "dtw_baseline_distance": round(baseline_dist, 4) if baseline_dist is not None else None,
         "windowed_accuracy_score": round(windowed_accuracy, 1) if windowed_accuracy is not None else None,
         "intensity_alignment_score": intensity_alignment,
         "segment_scores": segments,

@@ -54,14 +54,19 @@ export function intensityFromPeak(peak) {
   return Math.min(5, Math.max(1, intensity))
 }
 
+// Mean of the strongest few frames: robust to a single-frame detector spike,
+// but still catches a short genuine reaction (a percentile over a mostly quiet
+// clip would miss it).
+const PEAK_TOP_FRAMES = 3
+
 export function peaksFromSamples(samples, emotions) {
   const peaks = {}
   for (const e of emotions) {
-    peaks[e] = 0
-    for (const s of samples) {
-      const p = s.emotion_probabilities?.[e] ?? 0
-      if (p > peaks[e]) peaks[e] = p
-    }
+    const top = samples
+      .map((s) => s.emotion_probabilities?.[e] ?? 0)
+      .sort((a, b) => b - a)
+      .slice(0, PEAK_TOP_FRAMES)
+    peaks[e] = top.length ? top.reduce((a, b) => a + b, 0) / top.length : 0
   }
   return peaks
 }

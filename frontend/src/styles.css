@@ -658,7 +658,7 @@ video {
 
 .pickers {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr auto;
   gap: 16px;
   align-items: end;
   margin: 8px 0 32px;
@@ -1291,3 +1291,11 @@ table.segments td {
     transition-duration: 0.01ms !important;
   }
 }
+
+.verdict-notes {
+  margin: 10px 0 0;
+  padding-left: 1.1em;
+  color: var(--text-dim);
+  max-width: 60ch;
+}
+.verdict-notes li + li { margin-top: 6px; }
